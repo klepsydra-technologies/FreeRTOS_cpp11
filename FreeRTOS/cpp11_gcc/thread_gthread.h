@@ -118,7 +118,7 @@ public:
     {
       critical_section critical;
 
-      xTaskCreate(foo, "Task", 512, this, tskIDLE_PRIORITY + 1, &_taskHandle);
+      xTaskCreate(foo, "Task", 2048, this, tskIDLE_PRIORITY + 1, &_taskHandle);
       if (!_taskHandle)
         std::terminate();
 
