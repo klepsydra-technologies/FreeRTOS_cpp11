@@ -64,7 +64,7 @@ void SetSystemClockTime(
   auto delta{time - time_point<system_clock>(
                         milliseconds(pdTICKS_TO_MS(xTaskGetTickCount())))};
   long long sec{duration_cast<seconds>(delta).count()};
-  long usec = duration_cast<microseconds>(delta).count() - sec * 1'000'000; //narrowing type
+  long usec = duration_cast<microseconds>(delta).count() - sec * 1000000; //narrowing type
 
   free_rtos_std::wall_clock::time({sec, usec});
 }
@@ -73,10 +73,10 @@ static timeval operator+(const timeval &l, const timeval &r)
 {
   timeval t{l.tv_sec + r.tv_sec, l.tv_usec + r.tv_usec};
 
-  if (t.tv_usec >= 1'000'000)
+  if (t.tv_usec >= 1000000)
   {
     t.tv_sec++;
-    t.tv_usec -= 1'000'000;
+    t.tv_usec -= 1000000;
   }
   return t;
 }
@@ -87,11 +87,11 @@ extern "C" int _gettimeofday(timeval *tv, void *tzvp)
 
   auto t{free_rtos_std::wall_clock::time()};
 
-  long long ms{pdTICKS_TO_MS(t.ticks)};
-  long long sec{ms / 1000};
+  unsigned long long ms{pdTICKS_TO_MS(t.ticks)};
+  unsigned long long sec{ms / 1000};
   long usec = (ms - sec * 1000) * 1000; //narrowing type
 
-  *tv = t.offset + timeval{sec, usec};
+  *tv = t.offset + timeval{(long)sec, usec};
 
   return 0; // return non-zero for error
 }

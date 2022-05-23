@@ -99,7 +99,7 @@ namespace std
 
   void this_thread::__sleep_for(chrono::seconds sec, chrono::nanoseconds nsec)
   {
-    long ms = nsec.count() / 1'000'000;
+    long ms = nsec.count() / 1000000;
     if (sec.count() == 0 && ms == 0 && nsec.count() > 0)
       ms = 1; // round up to 1 ms => if sleep time != 0, sleep at least 1ms
 

@@ -148,7 +148,7 @@ extern "C"
     long nsec;
     int64_t milliseconds() const
     {
-      return int64_t(sec) * 1000 + nsec / 1'000'000;
+      return int64_t(sec) * 1000 + nsec / 1000000;
     }
   };
 

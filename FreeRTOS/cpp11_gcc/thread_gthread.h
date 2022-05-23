@@ -291,7 +291,7 @@ namespace free_rtos_std
     }
 
   private:
-    constexpr void move(gthr_freertos &&r)
+    void move(gthr_freertos &&r)
     {
       _taskHandle = r._taskHandle;
       _evHandle = r._evHandle;
