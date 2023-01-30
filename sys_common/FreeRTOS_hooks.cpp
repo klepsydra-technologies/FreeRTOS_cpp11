@@ -31,7 +31,7 @@ StackType_t g_timerTaskStack[256];
 
 extern "C"
 {
-  void vApplicationTickHook() {}
+  __attribute__( ( weak ) ) void vApplicationTickHook() {}
 
   void vApplicationMallocFailedHook()
   {

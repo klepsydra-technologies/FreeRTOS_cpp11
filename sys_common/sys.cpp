@@ -19,15 +19,65 @@
 /// THE SOFTWARE.
 
 #include <cstddef>
+#ifdef __xil__
+#include <fcntl.h>
+#endif
 
 extern "C"
 {
-  void _exit()
+  // FreeRTOS malloc/free declarations
+  void *pvPortMalloc(size_t);
+  void vPortFree(void *);
+
+  // Redirect malloc to FreeRTOS malloc
+  void *__wrap_malloc(unsigned long long size)
+  {
+    return pvPortMalloc(size);
+  }
+
+  // Redirect free to FreeRTOS free
+  void __wrap_free(void *p)
+  {
+    vPortFree(p);
+  }
+
+  void *memcpy(void *dest, const void *src, size_t n);
+  // Redirect realloc to FreeRTOS malloc
+  void *__wrap_realloc(void *ptr, size_t nbytes)
+  {
+    if (nbytes == 0)
+    {
+      vPortFree(ptr);
+      return NULL;
+    }
+    void *p = pvPortMalloc(nbytes);
+    if (p) {
+      if (ptr) {
+        memcpy(p, ptr, nbytes);
+        vPortFree(ptr);
+      }
+    }
+    return p;
+  }
+
+  extern void *memset(void *s, int c, size_t n);
+  // Redirect calloc to FreeRTOS malloc
+  void *__wrap_calloc(unsigned long long nmemb, unsigned long long size)
+  {
+    void *p = pvPortMalloc(nmemb * size);
+    if (p) {
+        memset(p, 0, nmemb * size);
+    }
+    return p;
+  }
+
+  __attribute__( ( weak ) ) void _exit()
   {
     while (1)
       ;
   }
 
+#ifndef __xil__
   struct stat;
   int _stat(const char *path, struct stat *buf)
   {
@@ -35,6 +85,7 @@ extern "C"
     (void)buf;
     return -1;
   }
+
   int _fstat(int fd, struct stat *buf)
   {
     (void)fd;
@@ -77,19 +128,22 @@ extern "C"
   int _isatty(int) { return -1; }
   int _lseek(int, int, int) { return 0; }
 
-  // FreeRTOS malloc/free declarations
-  void *pvPortMalloc(size_t);
-  void vPortFree(void *);
-
-  // Redirect malloc to FreeRTOS malloc
-  void *__wrap_malloc(unsigned long long size)
+#else
+  int _open(const char *pathname, int flags, mode_t mode)
   {
-    return pvPortMalloc(size);
+    (void)pathname;
+    (void)flags;
+    (void)mode;
+    return -1;
   }
 
-  // Redirect free to FreeRTOS free
-  void __wrap_free(void *p)
+  int posix_memalign(void **memptr, size_t alignment, size_t size)
   {
-    vPortFree(p);
+    *memptr = pvPortMalloc(size);
+    if (*memptr)
+      return 0;
+    else
+      return -1;
   }
+#endif
 }
