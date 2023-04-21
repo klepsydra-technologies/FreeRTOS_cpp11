@@ -19,3 +19,9 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.0)
+
+add_library(std++_freertos STATIC
+  future.cc
+  mutex.cc
+  condition_variable.cc
+)

@@ -1,4 +1,4 @@
-/// Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -32,21 +32,32 @@
 
 typedef free_rtos_std::gthr_freertos __gthread_t;
 
+namespace free_rtos_std
+{
+  struct Once
+  {
+    bool v = false;
+    SemaphoreHandle_t m = xSemaphoreCreateMutex();
+    ~Once() { vSemaphoreDelete(m); }
+  };
+}
+
 extern "C"
 {
 
+#define __GTHREAD_COND_INIT_FUNCTION
 #define __GTHREADS 1
 
   // returns: 1 - thread system is active; 0 - thread system is not active
   static int __gthread_active_p() { return 1; }
 
   typedef free_rtos_std::Key *__gthread_key_t;
-  typedef int __gthread_once_t;
+  typedef free_rtos_std::Once __gthread_once_t;
   typedef SemaphoreHandle_t __gthread_mutex_t;
   typedef SemaphoreHandle_t __gthread_recursive_mutex_t;
   typedef free_rtos_std::cv_task_list __gthread_cond_t;
 
-#define __GTHREAD_ONCE_INIT 0
+#define __GTHREAD_ONCE_INIT free_rtos_std::Once()
 
   static inline void __GTHREAD_RECURSIVE_MUTEX_INIT_FUNCTION(
       __gthread_recursive_mutex_t *mutex)
@@ -60,17 +71,15 @@ extern "C"
 
   static int __gthread_once(__gthread_once_t *once, void (*func)(void))
   {
-    static __gthread_mutex_t s_m = xSemaphoreCreateMutex();
-    if (!s_m)
-      return 12; //POSIX error: ENOMEM
+    if (!once->m)
+      return 12; // POSIX error: ENOMEM
 
-    __gthread_once_t flag{true};
-    xSemaphoreTakeRecursive(s_m, portMAX_DELAY);
-    std::swap(*once, flag);
-    xSemaphoreGiveRecursive(s_m);
-
+    bool flag{true};
+    xSemaphoreTake(once->m, portMAX_DELAY);
+    std::swap(once->v, flag);
     if (flag == false)
       func();
+    xSemaphoreGive(once->m);
 
     return 0;
   }
@@ -214,10 +223,51 @@ extern "C"
     return 0;
   }
 
-  //      not used - condition_variable has its own 'notify' function
-  //static inline int __gthread_cond_signal(__gthread_cond_t* cond) {
-  //  return -1;
-  //}
+  static inline int __gthread_cond_signal(__gthread_cond_t *cond)
+  {
+    cond->lock();
+    if (!cond->empty())
+    {
+      auto t = cond->front();
+      cond->pop();
+      xTaskNotifyGive(t);
+    }
+    cond->unlock();
+    return 0;
+  }
+
+  static inline int __gthread_cond_broadcast(__gthread_cond_t *cond)
+  {
+    cond->lock();
+    while (!cond->empty())
+    {
+      auto t = cond->front();
+      cond->pop();
+      xTaskNotifyGive(t);
+    }
+    cond->unlock();
+    return 0;
+  }
+
+  static inline int __gthread_cond_destroy(__gthread_cond_t *cond)
+  {
+    // nothing to do
+    return 0;
+  }
+
+  static inline int __gthread_cond_wait(__gthread_cond_t *cond, __gthread_mutex_t *mutex)
+  {
+    // Note: 'mutex' is taken before entering this function
+
+    cond->lock();
+    cond->push(__gthread_t::native_task_handle());
+    cond->unlock();
+
+    __gthread_mutex_unlock(mutex);
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    __gthread_mutex_lock(mutex); // lock and return
+    return 0;
+  }
 
   static inline int __gthread_cond_timedwait(
       __gthread_cond_t *cond, __gthread_mutex_t *mutex,

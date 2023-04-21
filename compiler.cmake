@@ -1,4 +1,4 @@
-# Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+# Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,10 @@ if(LINUX)
 endif(LINUX)
 
 if(riscv)
-  SET(COMPILER_PREFIX riscv-none-embed)
+# riscv gcc10
+# SET(COMPILER_PREFIX riscv-none-embed)
+# riscv gcc11
+  SET(COMPILER_PREFIX riscv-none-elf)
 else(riscv)
   SET(COMPILER_PREFIX arm-none-eabi)
 endif()
@@ -54,8 +57,6 @@ SET(CMAKE_ASM_COMPILER ${COMPILER_PREFIX}-g++${COMPILER_POSTFIX})
 
 SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
-
-
 
 # GCC 7.2.1 includes. Or set env path
 #INCLUDE_DIRECTORIES(

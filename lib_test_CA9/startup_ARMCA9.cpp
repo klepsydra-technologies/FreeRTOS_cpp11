@@ -33,6 +33,8 @@
  * 3. Add bss init, data section copy and cpp init.
  */
 
+#include <stdlib.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "ARMCA9.h"
@@ -114,7 +116,7 @@ void bss_init(unsigned int start, unsigned int len)
 int main();
 
 void free_rtos_main(void*) {
-  main();
+  exit(main());
 }
 
 /*----------------------------------------------------------------------------
@@ -207,5 +209,32 @@ extern "C" void Reset_Handler(void) {
   Default Handler for Exceptions / Interrupts
  *----------------------------------------------------------------------------*/
 void Default_Handler(void) {
-  while(1);
+  while (1);
+}
+
+int sys_semihost(int reason, volatile void *arg)
+{
+  // Exit implements SYS_EXIT_EXTENDED semihosting command.
+  // This will exit QEMU session when running program in QEMU.
+  // On arm32 this is the only way to return exit code.
+  // On arm64 SYS_EXIT is enough.
+  // ref. https://github.com/ARM-software/abi-aa/blob/main/semihosting/semihosting.rst
+
+  volatile register int value asm("r0") = reason;
+  volatile register void *data asm("r1") = arg;
+  asm volatile (
+    "  SVC #0x123456  "
+    : "=r"(value)
+    : "0"(value), "r"(data)
+  );
+
+  return value;
+}
+
+extern "C" void _exit(int exit_code)
+{
+  constexpr int SYS_EXIT_EXTENDED = 0x20u;
+  constexpr int ADP_Stopped_ApplicationExit = 0x20026u;
+  volatile int ret[2] = {ADP_Stopped_ApplicationExit, exit_code};
+  sys_semihost(SYS_EXIT_EXTENDED, ret);
 }

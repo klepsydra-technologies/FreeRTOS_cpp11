@@ -1,4 +1,4 @@
-# Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+# Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ elseif(lm3s811)
   include(qemu_lm3s811.cmake)
   message(STATUS  " ") 
   message(STATUS  "Run this demo in QEMU:") 
-  message(STATUS  "      qemu-system-arm -M lm3s811evb -kernel qemu_lm3s811.bin")
+  message(STATUS  "      qemu-system-arm -M lm3s811evb -kernel qemu_lm3s811.elf")
   message(STATUS  " ") 
 elseif(armca9)
   project(test_ca9 C CXX ASM)
@@ -43,7 +43,7 @@ elseif(armca9)
   message(STATUS  "      qemu-system-arm -M vexpress-a9 -m 128M -nographic -kernel test_ca9.elf")
   message(STATUS  " ")
 elseif(riscv)
-  project(test C CXX ASM)
+  project(test_riscv C CXX ASM)
   include(riscv-virt.cmake)
   message(STATUS  " ")
   message(STATUS  "Run this demo in QEMU:") 
