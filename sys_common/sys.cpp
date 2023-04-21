@@ -23,6 +23,7 @@
 
 extern "C"
 {
+#ifndef __xil__
   struct stat;
   int _stat(const char *path, struct stat *buf)
   {
@@ -71,7 +72,7 @@ extern "C"
   int _getpid() { return 1; }
   int _isatty(int) { return -1; }
   int _lseek(int, int, int) { return 0; }
-
+#endif
   // FreeRTOS malloc/free declarations
   void *pvPortMalloc(size_t);
   void vPortFree(void *);
