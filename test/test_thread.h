@@ -1,4 +1,5 @@
-/// Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2023 by NXP. All rights reserved.
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +25,9 @@
 #include <thread>
 #include <chrono>
 #include <stop_token>
+#include <numeric>
+
+#include "thread_with_attributes.h"
 
 inline void DetachBeforeThreadEnd()
 {
@@ -106,6 +110,43 @@ inline void StartAndMoveConstructor()
 
   //t.join(); this will terminate the program
   tt.join();
+}
+
+inline void StartWithStackSize()
+{
+  using namespace std::chrono_literals;
+
+  const auto fn = []{
+    constexpr size_t ARR_SIZE{3072U}; // 3 kB
+    std::array<uint8_t, ARR_SIZE> arr;
+    std::iota(std::begin(arr), std::end(arr), 0U);
+    std::this_thread::sleep_for(50ms);
+  };
+
+  using namespace free_rtos_std;
+  // Create a thread with a custom stack size.
+  // Stack would overflow without this
+  std::thread t = std_thread(attr_stack_size(1024U), fn);
+  t.join();
+}
+
+inline void AssignWithStackSize()
+{
+  using namespace std::chrono_literals;
+
+  const auto fn = []{
+    constexpr size_t ARR_SIZE{3072U}; // 3 kB
+    std::array<uint8_t, ARR_SIZE> arr;
+    std::iota(std::begin(arr), std::end(arr), 0U);
+    std::this_thread::sleep_for(50ms);
+  };
+
+  using namespace free_rtos_std;
+  std::thread t;
+  // Assign a thread with a custom stack size.
+  // Stack would overflow without this
+  t = std_thread(attr_stack_size(1024U),fn);
+  t.join();
 }
 
 #if __cplusplus > 201703L

@@ -1,4 +1,4 @@
-# Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+# Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,6 @@ elseif()
 endif()  
 
 add_library(freeRTOS STATIC
-  cpp11_gcc/condition_variable.cpp
   cpp11_gcc/freertos_time.cpp
   cpp11_gcc/gthr_key.cpp
   cpp11_gcc/thread.cpp

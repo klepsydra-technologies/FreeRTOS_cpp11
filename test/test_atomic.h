@@ -1,4 +1,4 @@
-/// Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2022 Piotr Grygorczuk <grygorek@gmail.com>
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -18,17 +18,28 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
 
-#ifndef __FREERTOS_GTHR_KEY_H__
-#define __FREERTOS_GTHR_KEY_H__
+#ifndef ATOMIC_WAIT_TEST_H__
+#define ATOMIC_WAIT_TEST_H__
 
-namespace free_rtos_std
+#include <chrono>
+#include <thread>
+#include <cassert>
+#include <atomic>
+
+inline void TestAtomicWait()
 {
-struct Key;
+  using namespace std::chrono_literals;
+  std::atomic<int> at = 6;
+  std::jthread t{[&]
+                 {
+                   std::this_thread::sleep_for(50ms);
+                   at = 5;
+                   at.notify_one();
+                 }};
 
-int freertos_gthread_key_create(Key **keyp, void (*dtor)(void *));
-int freertos_gthread_key_delete(Key *key);
-void *freertos_gthread_getspecific(Key *key);
-int freertos_gthread_setspecific(Key *key, const void *ptr);
-} // namespace free_rtos_std
+  at.wait(6);
 
-#endif //__FREERTOS_GTHR_KEY_H__
+  assert(at == 5);
+}
+
+#endif // ATOMIC_WAIT_TEST_H__

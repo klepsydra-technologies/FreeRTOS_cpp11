@@ -1,4 +1,4 @@
-/// Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -19,64 +19,10 @@
 /// THE SOFTWARE.
 
 #include <cstddef>
-#ifdef __xil__
-#include <fcntl.h>
-#endif
+#include <stdint.h>
 
 extern "C"
 {
-  // FreeRTOS malloc/free declarations
-  void *pvPortMalloc(size_t);
-  void vPortFree(void *);
-
-  // Redirect malloc to FreeRTOS malloc
-  void *__wrap_malloc(unsigned long long size)
-  {
-    return pvPortMalloc(size);
-  }
-
-  // Redirect free to FreeRTOS free
-  void __wrap_free(void *p)
-  {
-    vPortFree(p);
-  }
-
-  void *memcpy(void *dest, const void *src, size_t n);
-  // Redirect realloc to FreeRTOS malloc
-  void *__wrap_realloc(void *ptr, size_t nbytes)
-  {
-    if (nbytes == 0)
-    {
-      vPortFree(ptr);
-      return NULL;
-    }
-    void *p = pvPortMalloc(nbytes);
-    if (p) {
-      if (ptr) {
-        memcpy(p, ptr, nbytes);
-        vPortFree(ptr);
-      }
-    }
-    return p;
-  }
-
-  extern void *memset(void *s, int c, size_t n);
-  // Redirect calloc to FreeRTOS malloc
-  void *__wrap_calloc(unsigned long long nmemb, unsigned long long size)
-  {
-    void *p = pvPortMalloc(nmemb * size);
-    if (p) {
-        memset(p, 0, nmemb * size);
-    }
-    return p;
-  }
-
-  __attribute__( ( weak ) ) void _exit()
-  {
-    while (1)
-      ;
-  }
-
 #ifndef __xil__
   struct stat;
   int _stat(const char *path, struct stat *buf)
@@ -85,7 +31,6 @@ extern "C"
     (void)buf;
     return -1;
   }
-
   int _fstat(int fd, struct stat *buf)
   {
     (void)fd;
@@ -127,23 +72,56 @@ extern "C"
   int _getpid() { return 1; }
   int _isatty(int) { return -1; }
   int _lseek(int, int, int) { return 0; }
-
-#else
-  int _open(const char *pathname, int flags, mode_t mode)
-  {
-    (void)pathname;
-    (void)flags;
-    (void)mode;
-    return -1;
-  }
-
-  int posix_memalign(void **memptr, size_t alignment, size_t size)
-  {
-    *memptr = pvPortMalloc(size);
-    if (*memptr)
-      return 0;
-    else
-      return -1;
-  }
 #endif
+  // FreeRTOS malloc/free declarations
+  void *pvPortMalloc(size_t);
+  void vPortFree(void *);
+
+  // Redirect malloc to FreeRTOS malloc
+  void *__wrap_malloc(size_t size)
+  {
+    // This is a not aligned version of malloc but still need to match
+    // the format expected by free.
+
+    // Allocate one more space to store an address.
+    uintptr_t *p = (uintptr_t *)pvPortMalloc(size + sizeof(void *));
+    if (!p)
+      return nullptr;
+
+    // Store real address that will be used by free().
+    ((void **)p)[0] = p;
+
+    return p + 1;
+  }
+
+  void *__wrap__malloc_r(void *, size_t size)
+  {
+    return __wrap_malloc(size);
+  }
+
+  // Allocate aligned memory.
+  void *__wrap__memalign_r(void *, size_t al, size_t size)
+  {
+    if (al < sizeof(void *))
+      al = sizeof(void *);
+
+    void *p = pvPortMalloc(size + al);
+    if (!p)
+      return nullptr;
+
+    // Requirement: Alignment 'al' must be power of 2.
+    void *aligned_ptr = (void *)(((uintptr_t)p & -al) + al);
+
+    // Store the real address that will be used by free().
+    ((void **)aligned_ptr)[-1] = p;
+
+    return aligned_ptr;
+  }
+
+  // Redirect free to FreeRTOS free
+  void __wrap_free(void *p)
+  {
+    void *real_ptr = ((void **)p)[-1];
+    vPortFree(real_ptr);
+  }
 }

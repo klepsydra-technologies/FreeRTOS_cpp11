@@ -1,4 +1,5 @@
-/// Copyright 2021 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2018-2023 Piotr Grygorczuk <grygorek@gmail.com>
+/// Copyright 2023 by NXP. All rights reserved.
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +25,13 @@
 #include "FreeRTOS.h"
 
 #include "gthr_key_type.h"
+#include "freertos_thread_attributes.h"
 
 namespace free_rtos_std
 {
   extern Key *s_key;
+
+  const attributes *internal::attributes_lock::_attrib{&internal::attributes_lock::_default};
 } // namespace free_rtos_std
 
 namespace std
@@ -35,7 +39,7 @@ namespace std
 
   static void __execute_native_thread_routine(void *__p)
   {
-    __gthread_t local{*static_cast<__gthread_t *>(__p)}; //copy
+    __gthread_t local{*static_cast<__gthread_t *>(__p)}; // copy
 
     { // we own the arg now; it must be deleted after run() returns
       thread::_State_ptr __t{static_cast<thread::_State *>(local.arg())};
