@@ -25,3 +25,4 @@ add_library(std++_freertos STATIC
   mutex.cc
   condition_variable.cc
 )
+target_link_libraries(std++_freertos PRIVATE freeRTOS)

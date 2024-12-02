@@ -26,3 +26,4 @@ add_library(std++_freertos STATIC
   condition_variable.cc
   libatomic.c
 )
+target_link_libraries(std++_freertos PRIVATE freeRTOS)
