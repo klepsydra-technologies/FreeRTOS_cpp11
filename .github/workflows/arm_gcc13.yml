@@ -1,32 +1,32 @@
-name: ARM none GCC 11.3.1
+name: ARM none GCC 13.2
 
 on: [push]
 
 jobs:
-  Build-All-ARM-none-GCC11:
+  Build-All-ARM-none-GCC13:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install ARM none GCC 11.3.1
+    - name: Install ARM none GCC 13.2
       shell: bash
       run: | 
-       wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz
+       wget https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
        echo "-----Unpack gcc tarball----"
        tar -xf arm-gnu*
        echo "Done"
        echo ""
        ls -la
        
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/arm-none-eabi/lib" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/arm-none-eabi/include" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/11.3.1" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/11.3.1/arm-none-eabi" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/11.3.1/backward" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/lib/gcc/arm-none-eabi/11.3.1/include" >> $GITHUB_PATH
-       echo "${{github.workspace}}/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/lib/gcc/arm-none-eabi/11.3.1/include-fixed"       >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/arm-none-eabi/lib" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/arm-none-eabi/include" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/13.2.1" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/13.2.1/arm-none-eabi" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/arm-none-eabi/include/c++/13.2.1/backward" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/lib/gcc/arm-none-eabi/13.2.1/include" >> $GITHUB_PATH
+       echo "${{github.workspace}}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/lib/gcc/arm-none-eabi/13.2.1/include-fixed"       >> $GITHUB_PATH
        echo "$PATH"
 
     #
@@ -78,7 +78,7 @@ jobs:
 
   Run-QEMU:
     runs-on: ubuntu-latest
-    needs: Build-All-ARM-none-GCC11
+    needs: Build-All-ARM-none-GCC13
     timeout-minutes: 5
     steps:
       - name: Set up QEMU
