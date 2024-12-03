@@ -29,13 +29,6 @@ elseif()
   set(FREERTOS_PORT_INC "")
 endif()  
 
-include_directories(
-  cpp11_gcc 
-  Source/include
-  ${frtos_port}
-  ${FREERTOS_PORT_INC}
-)
-
 if(CPU_ARCH STREQUAL "ARM_CA9" OR CPU_ARCH STREQUAL "RISC-V")  
   # FreeRTOS port for Cortex A and RISC-v processers have an additional asm file
   set(FREERTOS_PORT_ASM ${frtos_port}/portASM.S)
@@ -61,3 +54,10 @@ add_library(freeRTOS STATIC
   ${FREERTOS_PORT_ASM}
 )
 
+target_include_directories(
+  freeRTOS PUBLIC
+  cpp11_gcc
+  Source/include
+  ${frtos_port}
+  ${FREERTOS_PORT_INC}
+)
